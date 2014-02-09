@@ -11,11 +11,20 @@
 #include <FileGameSound.h>
 #include <Point.h>
 #include <Rect.h>
+#include <Resources.h>
 #include <SimpleGameSound.h>
 #include <View.h>
 
+#define STARTING_WINDOW_WIDTH 900
+#define STARTING_WINDOW_HEIGHT 490
 #define CARD_WIDTH 80
 #define CARD_HEIGHT 116
+#define CARDS_IN_DECK 52
+#define CARDS_IN_PLAY CARDS_IN_DECK*2
+#define CARDS_IN_SUIT 13
+#define CARD_IMAGE_BACK 52
+#define CARD_IMAGE_EMPTY 53
+#define CACHED_BACKS 6
 
 
 enum effect { E_NONE, E_ALPHA25, E_ALPHA50, E_ALPHA75,
@@ -27,13 +36,18 @@ typedef struct card {
 	short fColor;
 	bool fRevealed;
 	short fEffect;
+	bool fInPlay;
+	card* fNextCard;
+	card* fPrevCard;
 } card;
 
 
 class SpiderView : public BView {
 public:
 	SpiderView();
+	~SpiderView();
 
+	virtual void AllAttached();
 	virtual void Draw(BRect rect);
 	virtual void Pulse();
 	virtual void MouseDown(BPoint point);
@@ -44,42 +58,47 @@ public:
 	void NewGame();
 	void ChangeDifficulty(int difficulty);
 	void Hint();
+	void Resize(float newWidth, float newHeight);
 
 private:
+	BSimpleGameSound* _LoadSound(const char* resourceName);
 	void _LoadBitmaps();
 	void _GenerateBoard();
 	void _CheckBoard();
-	short _FindFirstFree(short stock);
+	int _CardHSpacing();
+	card* _FindLastUsed(short stock);
+	card* _PickRandomCard();
+	void _AddCardToPile(int pile, card* cardToAdd);
+	void _RemoveCardFromPile(int pile, card* cardToRemove);
 
-	BBitmap* fCards[4][13];
-	BBitmap* fBack;
+	BBitmap* fCards[CARDS_IN_DECK];
+	BBitmap* fBack[CACHED_BACKS];
 	BBitmap* fEmpty;
 
+	BResources* fResources;
 	BSimpleGameSound* fShuffle;
-	entry_ref fFanfare;
+	BSimpleGameSound* fFanfare;
 
-	card fBoard[10][25];
-	short fStock;
-	short fDealing;
-	short fStacking;
-	short fStackingCard;
-	short fFreeCards[4][13];
+	int windowWidth;
+	int windowHeight;
 
-	int fColors;
-	int fDecks;
+	card* fBoard[10]; // first card in each pile
+	short fStock; // number of stocks left
+	short fDealing; // the card that will become opaque next, -1 if none
+	short fStacking; // the pile that is stacking, -1 if none
+	short fStackingCard; // the card in the pile that will stack next, -1 if none
+	card* fAllCards[CARDS_IN_PLAY]; // all cards
 
-	short fPickedCardBoardPos[2];
-	BPoint fPickedCardPos;
-	BPoint fPickedCardMouse;
-	card fPickedCard;
+	int fColors; // difficulty
+
+	short fPickedCardBoardPos; // pile picked card is from
+	card* fPickedCard;
 	bool fIsCardPicked;
-	bool fIsStackPicked;
-	short fLastPickedCardPos;
 	bool fMouseLock;
 
 	short fIsHintShown;
 	card* fHints[2];
-	short fHintBoardPos[2];
+	short fHintStatus[2];
 	short fNoMoves;
 
 	short fStacked;
