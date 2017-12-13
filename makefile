@@ -124,7 +124,7 @@ DEBUGGER=
 
 #	specify additional compiler flags for all files
 COMPILER_FLAGS =-Wall -Wno-multichar -Woverloaded-virtual -Wno-unknown-pragmas \
-	-std=c++98 -pedantic-errors
+	-std=c++98
 
 #	specify additional linker flags
 LINKER_FLAGS =
